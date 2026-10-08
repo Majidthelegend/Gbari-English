@@ -1,0 +1,12 @@
+{
+  "name": "gbari-voices",
+  "version": "1.0.0",
+  "description": "Mobile-first site for collecting a reviewed Gbari–English text and voice dataset",
+  "private": true,
+  "main": "server.js",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --no-warnings server.js",
+    "test": "node --no-warnings test/api-test.js"
+  }
+}
