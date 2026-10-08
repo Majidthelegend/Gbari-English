@@ -17,18 +17,18 @@ module.exports = {
   // PLACEHOLDERS: replace with the 5 variations you actually want.
   // "Not sure" is always added automatically at the end.
   DIALECTS: [
-    'Gbari (Paiko area)',
-    'Gbari (Shiroro area)',
-    'Gbari (Suleja area)',
-    'Gbagyi (Abuja / FCT area)',
-    'Gbagyi (Kaduna area)',
+    'Gbari (yema)',
+    'Gbari (zuɓa kpna)',
+    'Gbari (Abuja)',
+    'Gbagyi (niger)',
+    'Gbagyi (Kaduna)',
   ],
 
   // ---- On-screen keypad -----------------------------------------------
   // PLACEHOLDERS: replace with the exact characters your orthography uses.
   // Letters are inserted as-is. Tone marks are COMBINING marks: they attach to
   // the letter just before the cursor.
-  KEYPAD_LETTERS: ['ɛ', 'ɔ', 'ɓ', 'ɗ', 'ŋ', 'ɲ', 'ẹ', 'ọ', 'ṣ', 'ʼ'],
+ KEYPAD_LETTERS: ['ɓ', 'ɗ', 'gb', 'kp', 'ts', 'zh'],
   KEYPAD_TONES: [
     { mark: '\u0301', name: 'High tone (acute)' },
     { mark: '\u0300', name: 'Low tone (grave)' },

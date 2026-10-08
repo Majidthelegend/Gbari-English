@@ -394,7 +394,7 @@
         h('div', { class: 'field' }, h('label', { class: 'f', for: 'cat' }, 'Category'), catSel),
         cb.el, skip),
       info, formBox);
-    api('/api/categories').then((cs) => { catSel.append(cs.map((c) => h('option', { value: c.category }, `${cap(c.category)} (${c.n})`))); }).catch(() => {});
+    api('/api/categories').then((cs) => { catSel.append(...cs.map((c) => h('option', { value: c.category }, `${cap(c.category)} (${c.n})`))); }).catch(() => {});
     catSel.addEventListener('change', () => { cb.set(''); prompt = null; info.replaceChildren(); formBox.replaceChildren(); skip.click(); });
     skip.click(); // start with one phrase on screen
 
@@ -465,7 +465,7 @@
       current = item;
       if (!item) { box.replaceChildren(h('div', { class: 'card stack' }, h('h2', {}, 'Nothing to read right now'), h('p', {}, 'There are no approved Gbari texts waiting for a recording. Try "Translate a phrase", or check back soon.'), skipped.length ? h('button', { class: 'btn ghost', onclick: () => { skipped.length = 0; load(); } }, 'Show skipped texts again') : null)); return; }
       const dia = dialectSelect(lastPref('dialect'));
-      const vil = h('input', { type: 'text', id: 'vil', maxlength: 80, value: lastPref('village'), placeholder: 'e.g. Paiko' });
+      const vil = h('input', { type: 'text', id: 'vil', maxlength: 80, value: lastPref('village'), placeholder: 'e.g. Piri' });
       const rec = Recorder();
       const err = h('div', { class: 'note bad small', role: 'alert', hidden: true });
       const go = h('button', { class: 'btn block', type: 'button' }, 'Submit recording');
@@ -579,7 +579,7 @@
     q.placeholder = 'Type a Gbari word (tone marks optional)';
     q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { page = 0; run(); }, 250); });
     cat.addEventListener('change', () => { page = 0; run(); });
-    api('/api/browse/categories').then((cs) => cat.append(cs.map((c) => h('option', { value: c.category }, `${cap(c.category)} (${c.n})`)))).catch(() => {});
+    api('/api/browse/categories').then((cs) => cat.append(...cs.map((c) => h('option', { value: c.category }, `${cap(c.category)} (${c.n})`)))).catch(() => {});
     async function run(append) {
       const my = ++seq;
       if (!append) out.replaceChildren(h('p', { class: 'center' }, h('span', { class: 'spin' })));
@@ -707,7 +707,7 @@
     top.hidden = !S.cfg; if (S.cfg) { top.href = wa(`Hello ${S.cfg.appName} team, `); }
     if (!S.user || !S.user.consent_ok) { nav.hidden = true; return; }
     const cur = (location.hash.replace(/^#\/?/, '').split('/')[0]) || 'contribute';
-    const items = [['contribute', 'Contribute', 'write'], ['review', 'Review', 'check', !S.user.reviewer.eligible], ['browse', 'Browse', 'search'], ['me', 'Me', 'user']];
+    const items = [['contribute', 'Contribute', 'write'], ...(S.user.reviewer.eligible ? [['review', 'Review', 'check']] : []), ['browse', 'Browse', 'search'], ['me', 'Me', 'user']];
     if (S.user.role === 'admin') items.push(['admin', 'Admin', 'shield']);
     nav.replaceChildren(...items.map(([id, label, ic, lock]) => h('a', { href: '#/' + id, 'aria-current': cur === id ? 'page' : null }, icon(ic), label, lock ? h('i', { class: 'lock', title: 'Locked' }) : null)));
     nav.hidden = false;

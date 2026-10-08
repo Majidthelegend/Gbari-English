@@ -108,6 +108,9 @@
       const rows = await api('/api/admin/users?q=' + encodeURIComponent(q.value));
       list.replaceChildren(...rows.map((u) => {
         const role = h('select', { 'aria-label': 'Role', onchange: () => patch({ role: role.value }) }, ['contributor', 'reviewer', 'admin'].map((r) => h('option', { value: r }, cap(r)))); role.value = u.role;
+        const meSuper = S.user.super; const locked = !meSuper && u.role === 'admin' && u.id !== S.user.id || u.super && u.id !== S.user.id;
+        if (!meSuper) [...role.options].forEach((o) => { if (o.value === 'admin' && u.role !== 'admin') o.disabled = true; });
+        if (locked) role.disabled = true;
         const patch = async (d) => { try { await api(`/api/admin/users/${u.id}`, { method: 'PATCH', json: d }); toast('Saved.'); load(); } catch (e) { toast(e.message, true); load(); } };
         const nat = h('input', { type: 'checkbox', onchange: () => patch({ native_speaker: nat.checked }) }); nat.checked = u.native_speaker;
         const blk = h('input', { type: 'checkbox', onchange: () => patch({ review_blocked: blk.checked }) }); blk.checked = u.review_blocked;

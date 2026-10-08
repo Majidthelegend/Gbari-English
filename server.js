@@ -17,6 +17,9 @@ const PROD = process.env.NODE_ENV === 'production';
 const TRUST_PROXY = process.env.TRUST_PROXY === '1';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+const SUPER_LIST = SUPER_ADMIN_EMAILS.length ? SUPER_ADMIN_EMAILS : ADMIN_EMAILS;
+const ALL_ADMIN_EMAILS = [...new Set([...ADMIN_EMAILS, ...SUPER_ADMIN_EMAILS])];
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const CAP = CFG.MAX_APPROVED_PER_PROMPT;
 const DIALECT_CHOICES = [...CFG.DIALECTS, 'Not sure'];
@@ -86,13 +89,19 @@ function publicSelf(u) {
     id: u.id, email: u.email, display_name: u.display_name, role: u.role,
     native_speaker: !!u.native_speaker, home_dialect: u.home_dialect,
     consent_ok: u.consent_version === CFG.CONSENT_VERSION,
-    reviewer: reviewerInfo(u),
+    reviewer: reviewerInfo(u), super: isSuper(u),
   };
 }
 
-function isAdminEmail(email) { return email && ADMIN_EMAILS.includes(email.toLowerCase()); }
+function isAdminEmail(email) { return email && ALL_ADMIN_EMAILS.includes(email.toLowerCase()); }
+function isSuper(u) { return !!(u && u.email && SUPER_LIST.includes(u.email.toLowerCase())); }
+function guardTarget(c, target) {
+  if (target.id === c.user.id) return;
+  if (isSuper(target)) throw new HttpError(403, 'Super admin accounts can only be changed by their owner.');
+  if (target.role === 'admin' && !isSuper(c.user)) throw new HttpError(403, 'Only a super admin can change another admin.');
+}
 function syncAdmins() {
-  for (const e of ADMIN_EMAILS) run(`UPDATE users SET role='admin' WHERE email=? AND role!='admin'`, e);
+  for (const e of ALL_ADMIN_EMAILS) run(`UPDATE users SET role='admin' WHERE email=? AND role!='admin'`, e);
 }
 
 function uniqueName(base) {
@@ -625,7 +634,7 @@ add('GET', '/api/admin/users', admin, (c) => {
   c.json(200, rows.map((u) => ({
     id: u.id, email: u.email, display_name: u.display_name, role: u.role, native_speaker: !!u.native_speaker,
     review_blocked: !!u.review_blocked, entries: u.entries, approved: u.approved, reviews: u.reviews, joined: u.created_at,
-    can_review: reviewerInfo(u).eligible, google: !!u.google_sub,
+    can_review: reviewerInfo(u).eligible, google: !!u.google_sub, super: isSuper(u),b,
   })));
 });
 add('PATCH', '/api/admin/users/:id', admin, async (c) => {
@@ -633,6 +642,8 @@ add('PATCH', '/api/admin/users/:id', admin, async (c) => {
   const id = int(c.params.id);
   const u = get('SELECT * FROM users WHERE id=?', id);
   if (!u) throw new HttpError(404, 'User not found.');
+  guardTarget(c, u);
+  if (b.role === 'admin' && u.role !== 'admin' && !isSuper(c.user)) throw new HttpError(403, 'Only a super admin can promote someone to admin.');
   if (b.role !== undefined) {
     if (!['contributor', 'reviewer', 'admin'].includes(b.role)) throw bad('Unknown role.');
     if (id === c.user.id && b.role !== 'admin') throw bad('You cannot remove your own admin role.');
@@ -654,6 +665,8 @@ add('POST', '/api/admin/users/:id/temp-password', admin, async (c) => {
 add('DELETE', '/api/admin/users/:id', admin, (c) => {
   const id = int(c.params.id);
   if (id === c.user.id) throw bad('Use your profile page to delete your own account.');
+  const target = get('SELECT * FROM users WHERE id=?', id);
+  if (target) guardTarget(c, target);
   deleteUser(id);
   c.json(200, { ok: true });
 });
